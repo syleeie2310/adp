@@ -1,9 +1,14 @@
 #필수예제 실기
-
 #01 Data Frame abc에 class라는 변수가 있는데 값이 1,2,3일 경우 가능하다. 현재 데이터 상에는 1과 2 두가지 종류가 들어있다. 이 변수를 classification에서 타겟 변수로 활용하고자 하는 경우 어떻게 해야 하는가?
+?read.csv
+?fread
+library(data.table)
+
+
 abc$class <- factor(abc$class, levels=c('1','2','3'))
 
-#02 party와 rpart 두개의 package를 한 번에 설치하고 싶다. 하나의 명렁어로 만들어 보아라.
+#02 party와 rpart 두개의 package를 한 번에 설치하고 싶다. 
+#하나의 명렁어로 만들어 보아라.
 install.packages(c('party', 'rpart'))
 
 #03 datasets 패키지에 있는 sample data 목록을 보고 싶다.
@@ -11,7 +16,10 @@ data[package='datasets']
 
 #04 dataframe abc에 칼럼이 5개가 있는데 3번째와 5번째 컬럼을 삭제하고 싶다.
 abc <- abc[,-c(3,5)]
+abc$v3 <- NULL
+abc$v5 <- NULL
 
+  
 #05 dataframe abc의 100번째에서 110번째 줄과 120번째 줄을 삭제하고 싶다.
 abc <- abc[-c(100:110,120),]
 
@@ -43,6 +51,9 @@ getwd()
 ind <- which(is.na(abc$length))
 abc[ind, "length"] <- 150
 
+abc[abc$length == NA,]$length <- 150
+
+
 #15 doMC package를 이용해서 4개의 core를 사용해 병렬처리를 하고 싶다.
 library(doMC)
 registerDoMC(4)
@@ -73,6 +84,7 @@ m <- lm(dist~speed, cars)
 m
 summary(m)
 
+
 fitted (m)[1:4]
 residuals(m)[1:4]
 fitted (m)[1:4] + residuals (m)[1:4]
@@ -86,9 +98,18 @@ library(mlbench)
 data(BostonHousing)
 head(BostonHousing)
 ?BostonHousing #median value of owner-occupied homes in USD 1000's
+head(BostonHousing)
 
-m <- lm ( medv ~ . , data = BostonHousing)
-m3 <- lm ( medv ~ 1 , data = BostonHousing)
+m <- lm(medv ~ . , data = BostonHousing)
+m_backward <- step(m, direction = "backward")
+m3 <- lm(medv ~ 1 , data = BostonHousing)
+
+summary(m3)
+
+summary(m)
+m3 <- lm(medv ~ 1 , data = BostonHousing)
+m_forward <- step(m3, direction = "forward", scope=formula(m))
+
 ?step
 formula(m)
 
@@ -102,14 +123,15 @@ formula(m_forward)
 
 summary(m_forward)$r.squared
 summary(m_backward)$r.squared
-
 summary(m_forward)$adj.r.squared
 summary(m_backward)$adj.r.squared
 
 
 install.packages ("leaps")
 library(leaps)
-m <- regsubsets (medv ~ ., data = BostonHousing)
+?regsubsets
+m <- regsubsets(medv ~ ., data = BostonHousing)
+
 summary(m)
 summary(m)$adjr2
 plot(m)
@@ -125,17 +147,39 @@ library(wordcloud) # 워드 클라우드 생성
 
 #readLines 함수를 이용하여 연설문이 저장된 파일 경로를 입력하여 불러온다. 이 때 파일 경로는 텍스트 파일명과 그 확장자까지 모두 작성되어야 하고, 인코딩을 'UTF-8'로 지정한다.
 setwd("/Users/syleeie/ADP")
+?readLines
 park.text <- readLines('./이정미_파면결정문.txt', encoding = 'UTF-8')
+str(park.text)
 head(park.text, 3)
 
 #readLines 함수를 사용하므로, 하나의 연설문이 여러 줄의 데이터로 읽어온 것을 확인할 수 있다.
 #따라서 다음과 같은 명령을 실행하여 여러 줄의 데이터를 하나의 데이터로 묶어 준다.
+?
+files <- list.files(path="/Users/syleeie/downloads", pattern="*.csv", full.names=T, recursive=FALSE)
+head(files)
+lapply(files, function(x) {
+  t <- read.table(x, header=T) # load file
+  # apply function
+  out <- function(t)
+    # write to file
+    write.table(out, "/Users/syleeie/downloads", sep="\t", quote=F, row.names=F, col.names=T)
+})
+
 park <- paste(park.text, collapse = ' ')
+
+
 head(park)
 
+
 #저장된 연설문 데이터에서 단어를 추출하기 위한 코드를 실행한다. 추출된 단어에서 유니크한 것만 뽑아내 저장한다.
+?Map
+?extractNoun
 tran <- Map(extractNoun, park)
+head(tran)
+?unique
 tran <- unique(tran)
+
+?is.hangul
 
 #2글자에서 4글자 사이의 한글 단어만 선택한다.
 tran <- sapply(tran, function(x){
@@ -143,8 +187,8 @@ tran <- sapply(tran, function(x){
     nchar(y) <= 4 && nchar(y) > 1 && is.hangul(y)
   }, x)
 })
-
-head(tran, 2)
+tran
+head(tran)
 
 #워드 클라우드를 그리기 위한 형태를 만들기 위해 다음과 같은 코드를 실행한다.
 tran.table <- as.data.frame(table(tran))
@@ -246,4 +290,6 @@ Orange$Tree <- as.numeric(Orange$Tree)
 str(Orange)
 faces(Orange)
 stars(Orange)
+
+
 
